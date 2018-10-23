@@ -1,3 +1,20 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
 # coding: utf-8
 # pylint: disable=unused-argument, too-many-arguments
 """Extra symbol documents"""
@@ -17,7 +34,7 @@ class ReshapeDoc(NDArrayDoc):
     Reshapes the input array into a new shape.
 
     >>> x = mx.nd.array([1, 2, 3, 4])
-    >>> y = mx.nd.reshape(x,shape=(2, 2))
+    >>> y = mx.nd.reshape(x, shape=(2, 2))
     >>> x.shape
     (4L,)
     >>> y.shape
@@ -35,6 +52,17 @@ class ReshapeDoc(NDArrayDoc):
     >>> y = mx.nd.reshape(x, shape=(4, 0, -1))
     >>> y.shape
     (4L, 3L, 2L)
+    """
+
+class elemwise_addDoc(NDArrayDoc):
+    """
+    Example
+    -------
+
+    >>> x = mx.nd.array([1, 2, 3, 4])
+    >>> y = mx.nd.array([1.1, 2.1, 3.1, 4.1])
+    >>> mx.nd.elemwise_add(x, y).asnumpy()
+    array([ 2.0999999 ,  4.0999999 ,  6.0999999 ,  8.10000038], dtype=float32)
     """
 
 class BroadcastToDoc(NDArrayDoc):
@@ -75,6 +103,30 @@ class BroadcastToDoc(NDArrayDoc):
     (2L, 1L, 1L, 3L)
     >>> d.shape
     (2L, 2L, 2L, 3L)
+    """
+
+class StackDoc(NDArrayDoc):
+    """
+    Example
+    --------
+    Join a sequence of arrays along a new axis.
+    >>> x = mx.nd.array([1, 2])
+    >>> y = mx.nd.array([3, 4])
+    >>> stack(x, y)
+    [[1, 2],
+     [3, 4]]
+    >>> stack(x, y, axis=1)
+    [[1, 3],
+     [2, 4]]
+    """
+
+class CustomDoc(NDArrayDoc):
+    """
+    Example
+    -------
+    Applies a custom operator named `my_custom_operator` to `input`.
+
+    >>> output = mx.symbol.Custom(op_type='my_custom_operator', data=input)
     """
 
 def _build_doc(func_name,

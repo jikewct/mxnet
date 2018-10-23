@@ -2,24 +2,30 @@
 
 This Scala tutorial guides you through a classic computer vision application: identifying hand written digits.
 
-Let's train a 3-layer multilayer perceptron on the MNIST dataset to classify handwritten digits.
+Let's train a 3-layer network (i.e multilayer perceptron network) on the MNIST dataset to classify handwritten digits.
+
+## Prerequisites
+To complete this tutorial, we need:
+
+- to compile the latest MXNet version. See the MXNet installation instructions for your operating system in [Setup and Installation](http://mxnet.io/install/index.html).
+- to compile the Scala API. See Scala API build instructions in [Build](https://github.com/dmlc/mxnet/tree/master/scala-package).
 
 ## Define the Network
 
 First, define the neural network's architecture using the Symbol API:
 
 ```scala
-import ml.dmlc.mxnet._
-import ml.dmlc.mxnet.optimizer.SGD
+import org.apache.mxnet._
+import org.apache.mxnet.optimizer.SGD
 
 // model definition
 val data = Symbol.Variable("data")
-val fc1 = Symbol.FullyConnected(name = "fc1")()(Map("data" -> data, "num_hidden" -> 128))
-val act1 = Symbol.Activation(name = "relu1")()(Map("data" -> fc1, "act_type" -> "relu"))
-val fc2 = Symbol.FullyConnected(name = "fc2")()(Map("data" -> act1, "num_hidden" -> 64))
-val act2 = Symbol.Activation(name = "relu2")()(Map("data" -> fc2, "act_type" -> "relu"))
-val fc3 = Symbol.FullyConnected(name = "fc3")()(Map("data" -> act2, "num_hidden" -> 10))
-val mlp = Symbol.SoftmaxOutput(name = "sm")()(Map("data" -> fc3))
+val fc1 = Symbol.api.FullyConnected(Some(data), num_hidden = 128, name = "fc1")
+val act1 = Symbol.api.Activation(Some(fc1), "relu", "relu1")
+val fc2 = Symbol.api.FullyConnected(Some(act1), num_hidden = 64, name = "fc2")
+val act2 = Symbol.api.Activation(Some(fc2), "relu", "relu2")
+val fc3 = Symbol.api.FullyConnected(Some(act2), num_hidden = 10, name = "fc3")
+val mlp = Symbol.api.SoftmaxOutput(Some(fc3), name = "sm")
 ```
 
 ## Load the Data
@@ -87,7 +93,7 @@ while (valDataIter.hasNext) {
 val y = NDArray.concatenate(labels)
 
 // get predicted labels
-val predictedY = NDArray.argmaxChannel(prob)
+val predictedY = NDArray.argmax_channel(prob)
 require(y.shape == predictedY.shape)
 
 // calculate accuracy
@@ -107,5 +113,5 @@ Check out more MXNet Scala examples below.
 
 ## Next Steps
 * [Scala API](http://mxnet.io/api/scala/)
-* [More Scala Examples](https://github.com/dmlc/mxnet/tree/master/scala-package/examples/src/main/scala/ml/dmlc/mxnet/examples)
+* [More Scala Examples](https://github.com/dmlc/mxnet/tree/master/scala-package/examples/)
 * [MXNet tutorials index](http://mxnet.io/tutorials/index.html)

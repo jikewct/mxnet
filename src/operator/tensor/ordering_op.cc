@@ -1,3 +1,22 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 /*!
  *  Copyright (c) 2016 by Contributors
  * \file ordering.cc
@@ -16,6 +35,7 @@ DMLC_REGISTER_PARAMETER(ArgSortParam);
 
 NNVM_REGISTER_OP(topk)
 .describe(R"code(Returns the top *k* elements in an input array along the given axis.
+ The returned elements will be sorted.
 
 Examples::
 
@@ -54,8 +74,8 @@ Examples::
     const TopKParam& param = nnvm::get<TopKParam>(n->attrs.parsed);
     if (param.ret_typ == topk_enum::kReturnValue || param.ret_typ == topk_enum::kReturnBoth) {
       std::vector<nnvm::NodeEntry> inputs;
-      index_t n_out = n->num_outputs();
-      for (index_t i = 0; i < n_out; ++i) {
+      uint32_t n_out = n->num_outputs();
+      for (uint32_t i = 0; i < n_out; ++i) {
         inputs.emplace_back(nnvm::NodeEntry{ n, i, 0 });
       }
       return MakeNonlossGradNode("_backward_topk", n, {ograds[0]}, inputs, n->attrs.dict);
@@ -109,15 +129,15 @@ Examples::
 .set_num_outputs(2)
 .set_attr_parser(ParamParser<SortParam>)
 .set_attr<nnvm::FInferShape>("FInferShape", SortShape)
-.set_attr<nnvm::FInferType>("FInferType", ElemwiseType<1, 2>)
+.set_attr<nnvm::FInferType>("FInferType", SortType)
 .set_attr<nnvm::FNumVisibleOutputs>("FNumVisibleOutputs", [](const NodeAttrs& attrs) { return 1; })
 .set_attr<FCompute>("FCompute<cpu>", Sort<cpu>)
 .set_attr<nnvm::FGradient>("FGradient",
   [](const nnvm::NodePtr& n, const std::vector<nnvm::NodeEntry>& ograds) {
     const SortParam& param = nnvm::get<SortParam>(n->attrs.parsed);
     std::vector<nnvm::NodeEntry> inputs;
-    index_t n_out = n->num_outputs();
-    for (index_t i = 0; i < n_out; ++i) {
+    uint32_t n_out = n->num_outputs();
+    for (uint32_t i = 0; i < n_out; ++i) {
       inputs.emplace_back(nnvm::NodeEntry{ n, i, 0 });
     }
     return MakeNonlossGradNode("_backward_topk", n, {ograds[0]}, inputs,
@@ -159,7 +179,7 @@ Examples::
 .set_num_outputs(1)
 .set_attr_parser(ParamParser<ArgSortParam>)
 .set_attr<nnvm::FInferShape>("FInferShape", ArgSortShape)
-.set_attr<nnvm::FInferType>("FInferType", ElemwiseType<1, 1>)
+.set_attr<nnvm::FInferType>("FInferType", ArgSortType)
 .set_attr<FCompute>("FCompute<cpu>", ArgSort<cpu>)
 .set_attr<nnvm::FGradient>("FGradient", MakeZeroGradNodes)
 .set_attr<FResourceRequest>("FResourceRequest",

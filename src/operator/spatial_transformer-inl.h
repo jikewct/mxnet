@@ -1,3 +1,22 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 /*!
  * Copyright (c) 2016 by Contributors
  * \file spatial_transformer-inl.h
@@ -17,6 +36,7 @@
 #include <string>
 #include <utility>
 #include "./operator_common.h"
+#include "./linalg.h"
 
 
 namespace mxnet {
@@ -34,6 +54,7 @@ struct SpatialTransformerParam : public dmlc::Parameter<SpatialTransformerParam>
   TShape target_shape;
   int transform_type;
   int sampler_type;
+  dmlc::optional<bool> cudnn_off;
   DMLC_DECLARE_PARAMETER(SpatialTransformerParam) {
     int shape[] = {0, 0};
     DMLC_DECLARE_FIELD(target_shape).set_default(TShape(shape, shape + 2))
@@ -42,6 +63,8 @@ struct SpatialTransformerParam : public dmlc::Parameter<SpatialTransformerParam>
         .describe("transformation type");
     DMLC_DECLARE_FIELD(sampler_type).add_enum("bilinear", st::kBilinear)
         .describe("sampling type");
+    DMLC_DECLARE_FIELD(cudnn_off).set_default(dmlc::optional<bool>())
+        .describe("whether to turn cudnn off");
   }
 };
 
@@ -81,9 +104,11 @@ class SpatialTransformerOp : public Operator {
     }
     Copy(grid_dst, workspace, grid_dst.stream_);
     for (index_t batch = 0; batch < data.size(0); batch++) {
-        if (param_.transform_type == st::kAffine) {
-          grid_src[batch] = dot(loc[batch], grid_dst);
-        }
+      if (param_.transform_type == st::kAffine) {
+        // Legacy approach shown here for comparison:
+        //    grid_src[batch] = dot(loc[batch], grid_dst);
+        linalg_gemm(loc[batch], grid_dst, grid_src[batch], false, false, s);
+      }
     }
     if (param_.sampler_type == st::kBilinear) {
       BilinearSamplingForward(out, data, grid_src);
@@ -114,9 +139,11 @@ class SpatialTransformerOp : public Operator {
       BilinearSamplingBackward(gdata, grid_src, grad, data);
     }
     for (index_t batch = 0; batch < data.size(0); batch++) {
-        if (param_.transform_type == st::kAffine) {
-          gloc[batch] = dot(grid_src[batch], grid_dst.T());
-        }
+      if (param_.transform_type == st::kAffine) {
+        // Legacy approach shown here for comparison:
+        //   gloc[batch] = dot(grid_src[batch], grid_dst.T());
+        linalg_gemm(grid_src[batch], grid_dst, gloc[batch], false, true, s);
+      }
     }
   }
 
